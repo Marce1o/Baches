@@ -1,5 +1,7 @@
 package com.example.demo2;
 
+import static java.lang.Math.abs;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -22,6 +24,7 @@ import android.location.LocationManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import java.lang.Math;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -77,20 +80,80 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     boolean isAccelData = false;
     boolean isGyroData = false;
 
+    int numSamples = 119;
+    float [][] accBuff = new float[3][238];
+    int take = 0;
+    int samplesRead = numSamples;
+    float accelerationThreshold = 12;
+    long s = 0;
+    int temp = 0;
+
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             isAccelData = true;
             sensorName = sensorEvent.sensor.getName();
-            Log.d(TAG,sensorName + " Accel X: "+ sensorEvent.values[0] + " Accel Y: "+ sensorEvent.values[1] + " Accel Z: "+ sensorEvent.values[2]);
+            //Log.d(TAG,sensorName + " Accel X: "+ sensorEvent.values[0] + " Accel Y: "+ sensorEvent.values[1] + " Accel Z: "+ sensorEvent.values[2]);
         }
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             isGyroData = true;
             sensorName = sensorEvent.sensor.getName();
-            Log.d(TAG,sensorName + " Accel X: "+ sensorEvent.values[0] + " Accel Y: "+ sensorEvent.values[1] + " Accel Z: "+ sensorEvent.values[2]);
+            //Log.d(TAG,sensorName + " Accel X: "+ sensorEvent.values[0] + " Accel Y: "+ sensorEvent.values[1] + " Accel Z: "+ sensorEvent.values[2]);
+
+            //buffer
+            while(samplesRead == numSamples) {
+                    Log.d(TAG,"aun no");
+                    float aSum = abs(sensorEvent.values[0]) + abs(sensorEvent.values[1]) + abs(sensorEvent.values[2]);
+
+                    for (int i = 0; i < 119; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            accBuff[j][i] = accBuff[j][i + 1];
+                        }
+                    }
+
+                    accBuff[0][118] = sensorEvent.values[0];
+                    accBuff[1][118] = sensorEvent.values[1];
+                    accBuff[2][118] = sensorEvent.values[2];
+
+                    Log.d(TAG, "Suma " + Float.toString(aSum));
+
+                    if (aSum >= accelerationThreshold){
+                        samplesRead = 0;
+                        break;
+                    } else {
+                        break;
+                    }
+            }
+
+            while (samplesRead < numSamples){
+//                Log.d(TAG,"ya");
+                samplesRead++;
+                accBuff[0][samplesRead+118]=sensorEvent.values[0];
+                accBuff[1][samplesRead+118]=sensorEvent.values[1];
+                accBuff[2][samplesRead+118]=sensorEvent.values[2];
+
+                if (samplesRead == numSamples) {
+//                    for(int i=0; i<238; i++){
+//                        for(int j=0; j<3; j++){
+//                            if(j!=2){
+//                                Log.d(TAG,Float.toString(accBuff[j][i]) + ',');
+//                            }
+//                            if(j==2)
+//                                Log.d(TAG, Double.toString(((accBuff[j][i])/1000.0f)*(75/19.41)));
+//                            //tempmem[j][take*238+i]=((((buff[j][i])/1000.0f)*(75/19.41)),3);
+//                        }
+//                        // \n
+//                    }
+//                    // \n
+//                    take++;
+                    samplesRead = 118;
+                    break;
+                }
+
+            }
         }
+
         if (isAccelData & isGyroData) {
-            // DO something here
             isAccelData = false;
             isGyroData = false;
         }
